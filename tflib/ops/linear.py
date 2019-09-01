@@ -4,22 +4,28 @@ import numpy as np
 import tensorflow as tf
 
 _default_weightnorm = False
+_weights_stdev = None
+
+
 def enable_default_weightnorm():
     global _default_weightnorm
     _default_weightnorm = True
+
 
 def disable_default_weightnorm():
     global _default_weightnorm
     _default_weightnorm = False
 
-_weights_stdev = None
+
 def set_weights_stdev(weights_stdev):
     global _weights_stdev
     _weights_stdev = weights_stdev
 
+
 def unset_weights_stdev():
     global _weights_stdev
     _weights_stdev = None
+
 
 def Linear(
         name, 

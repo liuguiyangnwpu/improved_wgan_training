@@ -4,18 +4,23 @@ import numpy as np
 import tensorflow as tf
 
 _default_weightnorm = False
+_weights_stdev = None
+
+
 def enable_default_weightnorm():
     global _default_weightnorm
     _default_weightnorm = True
 
-_weights_stdev = None
+
 def set_weights_stdev(weights_stdev):
     global _weights_stdev
     _weights_stdev = weights_stdev
 
+
 def unset_weights_stdev():
     global _weights_stdev
     _weights_stdev = None
+
 
 def Conv2D(name, input_dim, output_dim, filter_size, inputs, he_init=True, mask_type=None, stride=1, weightnorm=None, biases=True, gain=1.):
     """
@@ -41,8 +46,8 @@ def Conv2D(name, input_dim, output_dim, filter_size, inputs, he_init=True, mask_
             mask[center, center+1:, :, :] = 0.
 
             # Mask out future channels
-            for i in xrange(mask_n_channels):
-                for j in xrange(mask_n_channels):
+            for i in range(mask_n_channels):
+                for j in range(mask_n_channels):
                     if (mask_type=='a' and i >= j) or (mask_type=='b' and i > j):
                         mask[
                             center,
@@ -103,12 +108,20 @@ def Conv2D(name, input_dim, output_dim, filter_size, inputs, he_init=True, mask_
             with tf.name_scope('filter_mask'):
                 filters = filters * mask
 
+        # result = tf.nn.conv2d(
+        #     input=inputs,
+        #     filter=filters,
+        #     strides=[1, 1, stride, stride],
+        #     padding='SAME',
+        #     data_format='NCHW'
+        # )
+        inputs = tf.transpose(inputs, [0, 2, 3, 1])
         result = tf.nn.conv2d(
             input=inputs, 
             filter=filters, 
-            strides=[1, 1, stride, stride],
+            strides=[1, stride, stride, 1],
             padding='SAME',
-            data_format='NCHW'
+            data_format='NHWC'
         )
 
         if biases:
@@ -117,7 +130,9 @@ def Conv2D(name, input_dim, output_dim, filter_size, inputs, he_init=True, mask_
                 np.zeros(output_dim, dtype='float32')
             )
 
-            result = tf.nn.bias_add(result, _biases, data_format='NCHW')
+            # result = tf.nn.bias_add(result, _biases, data_format='NCHW')
+            result = tf.nn.bias_add(result, _biases, data_format='NHWC')
 
+        result = tf.transpose(result, [0, 3, 2, 1])
 
         return result
